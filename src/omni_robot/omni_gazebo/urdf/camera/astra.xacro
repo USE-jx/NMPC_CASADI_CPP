@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<robot name="astra" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Xacro properties -->
+  <xacro:property name="astra_cam_py" value="-0.0125"/>
+  <xacro:property name="astra_depth_rel_rgb_py" value="0.0250" />
+  <xacro:property name="astra_cam_rel_rgb_py"   value="-0.0125" />
+  <xacro:property name="astra_dae_display_scale"   value="1" />
+  <!-- Parameterised in part by the values in turtlebot_properties.urdf.xacro -->
+  <xacro:macro name="sensor_astra" params="name parent cam_px cam_pz meshes">
+    <joint name="${parent}_${name}_rgb_joint" type="fixed">
+      <origin xyz="${cam_px} ${astra_cam_py} ${cam_pz}"
+              rpy="0 0 0"/>
+      <parent link="${parent}"/>
+      <child link="${parent}_${name}_rgb_frame" />
+    </joint>
+    <link name="${parent}_${name}_rgb_frame"/>
+
+    <joint name="${parent}_${name}_rgb_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}" />
+      <parent link="${parent}_${name}_rgb_frame" />
+      <child link="${parent}_${name}_rgb_optical_frame" />
+    </joint>
+    <link name="${parent}_${name}_rgb_optical_frame"/>
+
+    <joint name="camera_joint" type="fixed">
+      <origin xyz="0 ${astra_cam_rel_rgb_py} 0"
+              rpy="0 0 0"/>
+      <parent link="${parent}_${name}_rgb_frame"/>
+      <child link="camera_link"/>
+    </joint>
+    <link name="camera_link">
+      <visual>
+        <origin xyz="-0.04 0.02 -0.01" rpy="${PI/2} 0 ${PI/2}"/>
+        <geometry>
+          <mesh filename="${meshes}/astra.dae" scale="${astra_dae_display_scale} ${astra_dae_display_scale} ${astra_dae_display_scale}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+        <box size="0.0400 0.1650 0.0300"/>
+      </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.564" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="0.003881243" ixy="0.0" ixz="0.0"
+                 iyy="0.000498940" iyz="0.0"
+                 izz="0.003879257" />
+      </inertial>
+    </link>
+
+    <joint name="${parent}_${name}_depth_joint" type="fixed">
+      <origin xyz="0 ${astra_depth_rel_rgb_py} 0" rpy="0 0 0" />
+      <parent link="${parent}_${name}_rgb_frame" />
+      <child link="${parent}_${name}_depth_frame" />
+    </joint>
+    <link name="${parent}_${name}_depth_frame"/>
+
+    <joint name="${parent}_${name}_depth_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}" />
+      <parent link="${parent}_${name}_depth_frame" />
+      <child link="${parent}_${name}_depth_optical_frame" />
+    </joint>
+    <link name="${parent}_${name}_depth_optical_frame"/>
+
+    <!-- RGBD sensor for simulation, same as Kinect -->
+    <xacro:include filename="$(find amiro_description)/urdf/camera/generic_rgbd.xacro"/>
+    <xacro:generic_rgbd camera_depth_optical_frame="${parent}_${name}_depth_optical_frame"/>
+
+  </xacro:macro>
+</robot>

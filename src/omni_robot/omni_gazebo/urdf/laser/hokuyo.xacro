@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="laser" params="name parent xyz rpy meshes" >
+
+  <xacro:property name="base_width" value="0.05" /> <!-- (m) base width of housing -->
+  <xacro:property name="base_depth" value="0.05" /> <!-- (m) base depth of housing -->
+  <xacro:property name="base_height" value="0.07" /> <!-- (m) base heigth of housing -->
+  <xacro:property name="laser_height" value="${base_height / 2 + 0.02275}" /> <!-- (m) origin of the laser measurement -->
+  
+
+  <joint name="${parent}_${name}_base_joint" type="fixed">
+    <axis xyz="0 0 1" />
+    <origin xyz="${xyz}" rpy="${rpy}"/>
+    <parent link="${parent}"/>
+    <child link="${name}_base"/>
+  </joint>
+  
+  <joint name="${parent}_${name}_joint" type="fixed">
+    <axis xyz="0 0 1" />
+    <origin xyz="0 0 ${laser_height}" rpy="0 0 0"/>
+    <parent link="${name}_base"/>
+    <child link="${name}"/>
+  </joint>
+
+  <link name="${name}_base">
+    <collision>
+      <origin xyz="0 0 ${base_height / 2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_width} ${base_depth} ${base_height}"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin xyz="0 0 ${base_height / 2}" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${meshes}/hokuyo.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 ${base_height / 2}" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+  </link>
+  
+  <link name="${name}">
+  </link>
+
+    <gazebo reference="${name}">
+        <sensor name="laser" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+          <ray>
+            <scan>
+              <horizontal>
+                <!-- The URG-04LX-UG01  has  683 steps with 0.35139 Degree resolution -->
+                <resolution>1</resolution>
+                <max_angle>2.0944</max_angle> <!-- 120 Degree -->
+                <min_angle>-2.0944</min_angle> <!-- -120 Degree -->
+                <samples>683</samples>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.08</min>
+              <max>5</max>
+              <resolution>0.01</resolution>
+            </range>
+          </ray>
+
+          <plugin name="laser" filename="libgazebo_ros_laser.so" >
+            <robotNamespace></robotNamespace> <!-- explicit namespace for topic and frame_id (if empty, group's namespace is applied) -->
+            <topicName>${name}</topicName> <!-- topic name to send sensor_msgs/LaserScan msg.: robotNamespace/topicName -->
+            <frameName>${name}</frameName> <!-- frame_id in sensor_msgs/LaserScan msg.: robotNamespace/frameName -->
+          </plugin>
+
+          <always_on>1</always_on>
+          <update_rate>10</update_rate>
+          <visualize>true</visualize>
+        </sensor>
+    </gazebo>
+</xacro:macro>
+
+</robot>

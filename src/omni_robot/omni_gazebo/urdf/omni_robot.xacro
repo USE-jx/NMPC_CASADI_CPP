@@ -1,0 +1,1278 @@
+<?xml version='1.0'?>
+
+<robot name="omni_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  	<xacro:include filename="$(find omni_gazebo)/urdf/omni_robot.gazebo" />
+	<xacro:property name="scale" value="0.01" />
+    <xacro:arg name="gpu" default="false"/>
+    <xacro:property name="gpu" value="$(arg gpu)" />
+    <xacro:arg name="organize_cloud" default="true"/>
+    <xacro:property name="organize_cloud" value="$(arg organize_cloud)" />
+	<xacro:property name="base_z_size" value="0.410000" />
+    <xacro:include filename="$(find omni_gazebo)/urdf/sensors/inertial.xacro" />
+    <xacro:include filename="$(find omni_gazebo)/urdf/sensors/laser_support.xacro" />
+    <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+    <xacro:VLP-16 parent="support" name="velodyne" topic="/velodyne_points" organize_cloud="${organize_cloud}" hz="10" samples="400" gpu="${gpu}">
+          <origin xyz="0 0 ${support_length/4}" rpy="0 0 0" />
+    </xacro:VLP-16>
+
+
+    <xacro:include filename="$(find omni_gazebo)/urdf/sensors/imu.xacro"/>
+    <xacro:imu sensor_name="imu" parent_link="base_link">
+    <origin rpy="0 0 0" xyz="-0.03 0 ${base_z_size/2}"/>
+    </xacro:imu>
+
+
+  	<link name="base_footprint"></link>
+
+	<joint name="robot_footprint_joint" type="fixed">
+		<origin xyz="0 0 0.07" rpy="0 0 0" />
+		<parent link="base_footprint" />
+		<child link="base_link" />
+	</joint>
+
+	<!-- Base Link -->
+	<link name="base_link">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.27" length="0.05"/>
+				<!--long,wide,tall-->
+			</geometry>
+			
+			<material name="blue">
+				<color rgba="0 0.5 1 1"/>
+			</material>
+		</visual>
+		<!-- Base collision -->
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.27" length="0.05"/>
+				<!--long,wide,tall-->
+			</geometry>
+		</collision>
+
+		<inertial>
+			<mass value="${10.0*scale}"/>
+			<inertia ixx="0.5" ixy="0.0" ixz="0.0"
+					iyy="0.1391" iyz="0.0" izz="1.6125"/>
+		</inertial>
+
+		<visual name="left_bottom_cylinder">
+			<origin xyz="0.15 -0.15 0.15" rpy="0 0 0" />
+			<geometry>
+				<box size="0.02 0.02 0.25" />
+			</geometry>
+			<material name="white">
+				<color rgba="0 0 0 1"/>
+			</material>
+		</visual>
+		<!-- left bottom cylinder collision -->
+
+		<!-- right_bottom cylinder -->
+		<visual name="right_bottom_cylinder">
+			<origin xyz="0.15 0.15 0.15" rpy="0 0 0" />
+			<geometry>
+				<box size="0.02 0.02 0.25" />
+			</geometry>
+			<material name="white"/> 
+		</visual>
+
+		<!-- between_top_cylinder -->
+		<visual name="between_top_cylinder">
+			<origin xyz="-0.15 0 0.15" rpy="0 0 0" />
+			<geometry>
+				<box size="0.02 0.02 0.25" />
+			</geometry>
+			<material name="white"/>
+		</visual>
+
+		<!-- hold_box1 -->
+		<visual name="hold_box1">
+			<origin xyz="0 0 0.26" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.25" length="0.05" />
+			</geometry>
+			<material name="blue"/>
+		</visual>
+	
+		<!-- hold_box2
+		<visual name="hold_box2">
+			<origin xyz="0 0 0.5" rpy="0 0 0" />
+			<geometry>
+				<cylinder radius="0.25" length="0.05" />
+			</geometry>
+			<material name="blue"/>
+		</visual> -->
+	</link>
+
+	<!-- Orbbec Astra RGBD Camera -->
+	<joint name="astra_joint" type="fixed">
+		<axis xyz="0 0 0" />
+		<origin xyz="0.15 0 0.33" rpy="0 0 0"/>
+		<parent link="base_link"/>
+		<child link="camera_link"/>
+	</joint>
+
+	<link name="camera_link">
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.001 0.001 0.001"/>
+			</geometry>
+		</collision>
+
+		<visual>
+			<origin xyz="-0.01 0 -0.03" rpy="1.5707 0 1.5707"/>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/astra.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+		</visual>
+
+		<inertial>
+			<mass value="${1e-5*scale}" />
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+		</inertial>
+	</link>
+
+	<joint name="camera_optical_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="camera_link"/>
+		<child link="camera_rgb_frame"/>
+	</joint>
+
+	<link name="camera_rgb_frame">
+	</link>
+
+	<joint name="camera_depth_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="-1.5707 0 -1.5707"/>
+		<parent link="camera_link"/>
+		<child link="camera_depth_frame"/>
+	</joint>
+
+	<link name="camera_depth_frame">
+	</link>
+
+	<!--<joint name="rplidar_joint" type="fixed">
+		<axis xyz="0 1 0" />
+		<origin xyz="0.02 0 0.530" rpy="0 0 0"/>
+		<parent link="base_link"/>
+		<child link="laser"/>
+	</joint>-->
+
+	<!-- rplidar Laser -->
+	<!--<link name="laser">
+		<collision>
+			<origin xyz="0 0 0" rpy="1.5707 0 3.1412"/>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/rplidar.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+		</collision>
+
+		<visual>
+			<origin xyz="0 0 0" rpy="1.5707 0 4.71"/>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/rplidar.dae" scale="0.001 0.001 0.001" />
+			</geometry>
+		</visual>
+
+		<inertial>
+			<mass value="${1e-5*scale}" />
+			<origin xyz="0 0 0.058" rpy="1.5707 0 4.71"/>
+			<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+		</inertial>
+	</link>-->
+  
+	<!-- IMU -->
+<!-- 
+	<joint name="imu_sensor_joint" type="continuous">
+        <axis xyz="0 0 1" />
+        <origin xyz="-0.03 -0.12 0.32" rpy="0 0 0"/>
+        <parent link="base_link"/>
+        <child link="imu_link_ned"/>
+    </joint>
+     
+    <link name="imu_link_ned">
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.02 0.02 0.02"/>
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.02 0.02 0.02"/>
+            </geometry>
+            <material name="iRobot/Red"/>
+        </visual>
+        <inertial>
+            <mass value="${0.001*scale}" />
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <inertia ixx="0.00000015" ixy="0" ixz="0" iyy="0.00000015" iyz="0" izz="0.00000015" />
+        </inertial>
+    </link> -->
+
+
+	<!-- top_wheel -->
+	<joint name="joint_top_wheel" type="fixed">
+		<parent link="base_link"/>
+		<child link="top_wheel"/>
+		<origin xyz="0.33 0 0" rpy="1.570796 0 1.570796" />
+		<axis xyz="0 0 1" />
+		<!-- <limit effort="100" velocity="100"/> -->
+		<joint_properties damping="0.0" friction="0.0"/>
+	</joint>
+
+	<transmission name="top_wheel_trans" type="SimpleTransmission">
+		<type>transmission_interface/SimpleTransmission</type>
+		<actuator name="top_wheel_motor">
+			<mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+		<joint name="joint_top_wheel">
+			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+		</joint>
+	</transmission>
+
+	<link name="top_wheel">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0.0" />
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/rim.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="left_rim_material">
+				<color rgba="0.3 0 0 1"/>
+			</material>
+		</visual>
+		
+		<!-- top_wheel collision -->
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/rim.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+		
+		<inertial>
+			<mass value="${5*scale}"/>
+			<inertia ixx="0.070416667" ixy="0" ixz="0"
+					iyy="0.0325" iyz="0" izz="0.070416667"/>
+		</inertial>
+	</link>
+
+	<!-- right_bottom Wheel -->
+	<joint name="joint_right_bottom_wheel" type="fixed">
+		<parent link="base_link"/>
+		<child link="right_bottom_wheel"/>
+		<origin xyz="-0.165 0.285788 0" rpy="1.570795 0 -2.61799" />
+		<axis xyz="0 0 1" />
+		<!-- <limit effort="100" velocity="100"/> -->
+		<joint_properties damping="0.0" friction="0.0"/>
+	</joint>
+
+	<transmission name="right_bottom_wheel_trans" type="SimpleTransmission">
+		<type>transmission_interface/SimpleTransmission</type>
+		<actuator name="right_bottom_wheel_motor">
+			<mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+		<joint name="joint_right_bottom_wheel">
+			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+		</joint>
+	</transmission> 
+  
+	<link name="right_bottom_wheel">
+		<visual>
+		<origin xyz="0 0 0" rpy="0 0 0.0" />
+		<geometry>
+			<mesh filename="package://omni_gazebo/meshes/rim.stl" scale="5 5 5"/>
+		</geometry>
+		<material name="left_rim_material">
+			<color rgba="0.3 0 0 1"/>
+		</material>
+		</visual>
+		<!-- right_bottom_wheel collision -->
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/rim.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${5*scale}"/>
+			<inertia ixx="0.070416667" ixy="0" ixz="0"
+					iyy="0.0325" iyz="0" izz="0.070416667"/>
+		</inertial>
+	</link>
+
+  
+	<!-- right left_bottom Wheel -->
+	<joint name="joint_left_bottom_wheel" type="fixed">
+		<parent link="base_link"/>
+		<child link="left_bottom_wheel"/>
+		<origin xyz="-0.165 -0.285788 0" rpy="1.570795 0 -0.52360" />
+		<axis xyz="0 0 1" />
+		<!-- <limit effort="100" velocity="100"/> -->
+		<joint_properties damping="0.0" friction="0.0"/>
+	</joint>
+
+	<transmission name="left_bottom_wheel_trans" type="SimpleTransmission">
+		<type>transmission_interface/SimpleTransmission</type>
+		<actuator name="top_wheel_motor">
+			<mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+		<joint name="joint_left_bottom_wheel">
+			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+		</joint>
+	</transmission> 
+
+	<link name="left_bottom_wheel">
+	<visual>
+		<origin xyz="0 0 0" rpy="0 0 0.0" />
+		<geometry>
+			<mesh filename="package://omni_gazebo/meshes/rim.stl" scale="5 5 5"/>
+		</geometry>
+			<material name="left_rim_material">
+				<color rgba="0.3 0 0 1"/>
+			</material>
+		</visual>
+
+		<!-- left_bottom wheel collision -->
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/rim.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="${5*scale}"/>
+			<inertia ixx="0.070416667" ixy="0" ixz="0"
+					iyy="0.0325" iyz="0" izz="0.070416667"/>
+		</inertial>
+	</link>
+
+	<!-- Roller bottem left wheel -->
+	<!-- Roller bottem left wheel -->
+	<link name="bottem_left_roller_e_link">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_left_roller_e_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+			
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint
+		name="bottem_left_roller_e_joint"
+		type="fixed"
+	>
+
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_e_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.06775 0 0.0275"
+			rpy="-1.570796326794896 0 0"
+		/>
+
+	</joint>
+	<link name="bottem_left_roller_ne_link">
+
+		<inertial>
+
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+
+		</inertial>
+		<visual>
+
+			<geometry>
+
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+
+			</geometry>
+			<material name="bottem_left_roller_e_material">
+
+				<color rgba="0.0 0.0 1.0 1"/>
+
+			</material>
+
+		</visual>
+		<collision>
+
+			<geometry>
+
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+
+			</geometry>
+
+		</collision>
+
+	</link>
+	<joint
+		name="bottem_left_roller_ne_joint"
+		type="fixed"
+	>
+
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_ne_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.047906484 0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 0.7853981633974483"
+		/>
+
+	</joint>
+	<link name="bottem_left_roller_n_link">
+
+		<inertial>
+
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+
+		</inertial>
+		<visual>
+
+			<geometry>
+
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+
+			</geometry>
+			<material name="bottem_left_roller_n_material">
+
+				<color rgba="0.0 0.0 1.0 1"/>
+
+			</material>
+
+		</visual>
+		<collision>
+
+			<geometry>
+
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+
+			</geometry>
+
+		</collision>
+
+	</link>
+	<joint name="bottem_left_roller_n_joint" type="fixed">
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_n_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0 0.06775 0.0275"
+			rpy="-1.570796326794896 0 1.570796326794896"
+		/>
+	</joint>
+
+	<link name="bottem_left_roller_nw_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_left_roller_nw_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_left_roller_nw_joint" type="fixed">
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_nw_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.047906484 0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 2.356194490192345"
+		/>
+	</joint>
+
+	<link name="bottem_left_roller_w_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_left_roller_w_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_left_roller_w_joint" type="fixed">
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_w_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.06775 0 0.0275"
+			rpy="-1.570796326794896 0 3.141592653589793"
+		/>
+	</joint>
+
+	<link name="bottem_left_roller_sw_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_left_roller_sw_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_left_roller_sw_joint" type="fixed">
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_sw_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.047906484 -0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 -2.356194490192345"
+		/>
+	</joint>
+
+	<link name="bottem_left_roller_s_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_left_roller_s_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_left_roller_s_joint" type="fixed">
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_s_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0 -0.06775 0.0275"
+			rpy="-1.570796326794896 0 -1.570796326794896"
+		/>
+	</joint>
+
+	<link name="bottem_left_roller_se_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_left_roller_se_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_left_roller_se_joint" type="fixed">
+		<parent link="left_bottom_wheel"/>
+		<child link="bottem_left_roller_se_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.047906484 -0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 -0.7853981633974483"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_e_link">
+		<visual>
+			<origin xyz="0 0 0"	rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_e_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+	<joint name="bottem_right_roller_e_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_e_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.06775 0 0.0275"
+			rpy="-1.570796326794896 0 0"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_ne_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_e_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_ne_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_ne_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.047906484 0.047906484 -0.00275"
+			rpy="-1.570796326794896 0 0.7853981633974483"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_n_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_n_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_n_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_n_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0 0.06775 0.0275"
+			rpy="-1.570796326794896 0 1.570796326794896"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_nw_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_nw_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_nw_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_nw_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.047906484 0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 2.356194490192345"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_w_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_w_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_w_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_w_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.06775 0 0.0275"
+			rpy="-1.570796326794896 0 3.141592653589793"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_sw_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_sw_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_sw_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_sw_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.047906484 -0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 -2.356194490192345"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_s_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_s_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_s_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_s_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0 -0.06775 0.0275"
+			rpy="-1.570796326794896 0 -1.570796326794896"
+		/>
+	</joint>
+
+	<link name="bottem_right_roller_se_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="bottem_right_roller_se_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="bottem_right_roller_se_joint" type="fixed">
+		<parent link="right_bottom_wheel"/>
+		<child link="bottem_right_roller_se_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.047906484 -0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 -0.7853981633974483"
+		/>
+	</joint>
+
+	<link name="right_left_roller_e_link">
+		<visual>
+			<origin	xyz="0 0 0"	rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_e_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_e_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_e_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.06775 0 0.0275"
+			rpy="-1.570796326794896 0 0"
+		/>
+	</joint>
+
+	<link name="right_left_roller_ne_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_e_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_ne_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_ne_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.047906484 0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 0.7853981633974483"
+		/>
+	</joint>
+
+	<link name="right_left_roller_n_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_n_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_n_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_n_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0 0.06775 0.0275"
+			rpy="-1.570796326794896 0 1.570796326794896"
+		/>
+	</joint>
+
+	<link name="right_left_roller_nw_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_nw_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_nw_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_nw_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.047906484 0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 2.356194490192345"
+		/>
+	</joint>
+	
+	<link name="right_left_roller_w_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_w_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_w_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_w_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.06775 0 0.0275"
+			rpy="-1.570796326794896 0 3.141592653589793"
+		/>
+	</joint>
+
+	<link name="right_left_roller_sw_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_sw_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_sw_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_sw_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="-0.047906484 -0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 -2.356194490192345"
+		/>
+	</joint>
+
+	<link name="right_left_roller_s_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_s_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+	
+	<joint name="right_left_roller_s_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_s_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0 -0.06775 0.0275"
+			rpy="-1.570796326794896 0 -1.570796326794896"
+		/>
+	</joint>
+
+	<link name="right_left_roller_se_link">
+		<inertial>
+			<mass value="${0.00179*scale}"/>
+			<inertia
+				ixx="0.000005"
+				ixy="0"
+				ixz="0"
+				iyy="0.000005"
+				iyz="0"
+				izz="0.000003"
+			/>
+		</inertial>
+		<visual>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+			<material name="right_left_roller_se_material">
+				<color rgba="0.0 0.0 1.0 1"/>
+			</material>
+		</visual>
+		<collision>
+			<geometry>
+				<mesh filename="package://omni_gazebo/meshes/roller.stl" scale="5 5 5"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="right_left_roller_se_joint" type="fixed">
+		<parent link="top_wheel"/>
+		<child link="right_left_roller_se_link"/>
+		<axis xyz="0 0 1"/>
+		<origin
+			xyz="0.047906484 -0.047906484 -0.0275"
+			rpy="-1.570796326794896 0 -0.7853981633974483"
+		/>
+	</joint>
+</robot>

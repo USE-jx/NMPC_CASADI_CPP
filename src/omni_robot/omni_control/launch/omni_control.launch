@@ -1,0 +1,12 @@
+<launch>
+    <!-- Load Omni Fake Robot -->
+    <include file="$(find omni_fake)/launch/omni_fake.launch" />
+
+    <!-- Load Path trajectory -->
+    <include file="$(find omni_path_generator)/launch/simple_path.launch" />
+
+    <!-- Omni Robot control -->
+    <!-- <node pkg="omni_control" type="move2pose" name="move2pose" output="screen" /> -->
+    <node pkg="omni_control" type="pure_pursuit" name="pure_pursuit" output="screen" />
+
+</launch>

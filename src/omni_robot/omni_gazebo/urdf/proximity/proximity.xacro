@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- Floor sensor is a camera to get the intensity -->
+<xacro:macro name="proxy" params="name parent xyz rpy">
+
+  <xacro:property name="camera_mockup_height" value="0.001" /> <!-- (m) camera mockup cylinder height -->
+  <xacro:property name="camera_mockup_radius" value="0.003" /> <!-- (m) camera mockup cylinder radius -->
+  
+  <joint name="${parent}_${name}_joint" type="fixed">
+      <axis xyz="0 0 1" />
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent}"/>
+      <child link="${name}"/>
+  </joint>
+
+  <!-- Camera -->
+  <link name="${name}">
+    <inertial>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.57 0"/>
+      <geometry>
+        <cylinder radius="${camera_mockup_radius}" length="${camera_mockup_height}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 1.57 0"/>
+      <geometry>
+        <cylinder radius="${camera_mockup_radius}" length="${camera_mockup_height}"/>
+      </geometry>
+    </collision>
+  </link>
+  <gazebo reference="${name}">
+    <material value="Gazebo/Black"/>
+  </gazebo>
+
+  <gazebo reference="${name}">
+    <sensor type="depth" name="proxy">
+      <update_rate>8.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>  <!--TODO: get correct FOV for VCNL4020-->
+        <image>
+          <width>3</width>
+          <height>3</height>
+          <format>L8</format> <!-- RGB: R8G8B8, Gray: L8 -->
+        </image>
+        <clip>
+          <near>0.001</near>
+          <far>1.0</far>  <!-- Extra cutoff is respecked in mockup node -->
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_depth_camera.so">
+        <robotNamespace></robotNamespace>
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>${name}</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <pointCloudTopicName>points</pointCloudTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>${name}_depth_frame</frameName>
+        <pointCloudCutoff>0.001</pointCloudCutoff>
+        <hackBaseline>0.03</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</xacro:macro>
+</robot>

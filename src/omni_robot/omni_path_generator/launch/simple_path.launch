@@ -1,0 +1,19 @@
+<launch>
+    <node pkg="omni_path_generator" type="simple_path" name="simple_path" output="screen">
+        <param name="frame_id"  type="string"   value="odom"/>
+        <!--
+            The trajectory:
+            x = x_radius * x_func(PI/4 * kx * t * 0.2)
+            y = y_radius * y_func(PI/4 * ky * t * 0.2)
+        -->
+        <!-- Radius <= 5.0; k <= 1.0 -->
+        <param name="x_radius"  type="double"   value="5.0"/>
+        <param name="y_radius"  type="double"   value="5.0"/>
+        <param name="kx"        type="double"   value="1.0"/>
+        <param name="ky"        type="double"   value="1.0"/>
+        <!-- x,y_func can be sin, cos, default = sin -->
+        <param name="x_func"    type="string"   value="sin"/>   
+        <param name="y_func"    type="string"   value="cos"/>
+        
+    </node>
+</launch>
