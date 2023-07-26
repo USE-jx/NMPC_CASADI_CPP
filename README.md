@@ -2,6 +2,10 @@
 #  small car
 
 运行效果见B站：https://www.bilibili.com/video/BV1wh4y1j7LD/?spm_id_from=333.999.0.0&vd_source=62bfb7720b0b2f9941f7f34210ba6a18
+## 安装求解器
+需要安装casadi，C++需要源码安装casadi，casadi要调用ipopt这个非线性求解器,所以安装casadi前需要安装ipopt,我也是参考别人博客安装的。
+## 编译
+编译mpc_tracking 这个功能包报错找不到什么包可以先编译fastplanner，然后再编译其他的，当然没编译过fastplanner的需要去安装点东西，具体可以去fastplannergithub仓库去看去安装一下。
 
 ## packages介绍
 
