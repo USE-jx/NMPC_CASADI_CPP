@@ -7,7 +7,7 @@ Mpc::Mpc() {
     dt_ = 0.1;
     u_max_ = 4;
     w_max_ = 2;
-    vector<double> weights = {10,10,1,1,1}; //Q,R,Q_f
+    vector<double> weights = {10,10,1,1,1}; //Q,R
     u_min_ = - u_max_;
     w_min_ = - w_max_;
     
