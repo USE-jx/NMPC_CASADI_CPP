@@ -12,8 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf2
   visualization_msgs
-  plan_env
-  path_searching
   bspline
   bspline_opt
   traj_utils
@@ -93,6 +91,6 @@ link_directories(/usr/local/lib)
  target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
    #ipopt
-   dw
+   #dw
    casadi
  )
