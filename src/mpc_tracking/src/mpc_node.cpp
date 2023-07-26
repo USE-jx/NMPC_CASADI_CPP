@@ -7,23 +7,21 @@
 #include <visualization_msgs/MarkerArray.h>
 #include "bspline/non_uniform_bspline.h"
 #include "mpc_tracking/Bspline.h"
-#include "quadrotor_msgs/PositionCommand.h"
 #include "std_msgs/Empty.h"
 
 #include "mpc_tracking/mpc.h"
 
-#define BACKWARD_HAS_DW 1
-#include "backward.hpp"
-namespace backward{
-    backward::SignalHandling sh;
-}
+// #define BACKWARD_HAS_DW 1
+// #include "backward.hpp"
+// namespace backward{
+//     backward::SignalHandling sh;
+// }
 
 using fast_planner::NonUniformBspline;
 
 ros::Publisher cmd_vel_pub, motion_path_pub, predict_path_pub;
 nav_msgs::Path predict_path, motion_path;
 nav_msgs::Odometry odom;
-quadrotor_msgs::PositionCommand cmd;
 
 bool receive_traj = false;
 vector<NonUniformBspline> traj;
@@ -36,7 +34,7 @@ const int N = 10;
 const double dt = 0.1;
 const double u_max = 4;
 const double w_max = 2;
-vector<double> weights = {10,10,1,1,1,0}; //Q,R,Q_f
+vector<double> weights = {10,10,1,1,1,0}; //Q,R
 Eigen::Vector3d current_state;
 
 unique_ptr<Mpc> mpc_ptr;
